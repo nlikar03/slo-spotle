@@ -82,18 +82,55 @@ function App() {
     audio.play();
   };
 
-  const getAttributeColor = (attribute, guessedValue, targetValue) => {
-    if (guessedValue === targetValue) return "green"; // Exact match
+  const removeCommas = (value) => {
+    if (typeof value === "string") {
+      return parseFloat(value.replace(/,/g, ""));
+    }
+    return Number(value);
+  };
+
+  const getAttributeColor = (attribute, guessedValue, targetValue, isCorrectArtist) => {
+    // If the guessed artist is the correct artist, all attributes should be green
+    if (isCorrectArtist) return "green";
+  
+    // Convert values to numbers to ensure correct comparisons (for numeric attributes)
+    const removeCommas = (value) => {
+      if (typeof value === "string" && attribute !== "gender") {
+        return parseFloat(value.replace(/,/g, ""));
+      }
+      return Number(value);
+    };
+  
+    const guessed = attribute === "gender" ? guessedValue : removeCommas(guessedValue);
+    const target = attribute === "gender" ? targetValue : removeCommas(targetValue);
+  
+    if (guessed === target) {
+      // For gender, if it matches, return yellow (partial match)
+      if (attribute === "gender") return "green";
+      // For other attributes, return green (exact match)
+      return "green";
+    }
   
     switch (attribute) {
       case "monthly_listeners":
-        return Math.abs(guessedValue - targetValue) <= 500 ? "yellow" : "grey";
+        // Yellow if the difference is between 1 and 500
+        const diffMonthly = Math.abs(guessed - target);
+        return diffMonthly >= 1 && diffMonthly <= 500 ? "yellow" : "grey";
+  
       case "number_of_performers":
-        return Math.abs(guessedValue - targetValue) <= 2 ? "yellow" : "grey";
+        // Yellow if the difference is 1 or 2
+        const diffPerformers = Math.abs(guessed - target);
+        return diffPerformers <= 2 ? "yellow" : "grey";
+  
       case "career_start_year":
-        return Math.abs(guessedValue - targetValue) <= 5 ? "yellow" : "grey";
+        // Yellow if the difference is 1 to 5
+        const diffYear = Math.abs(guessed - target);
+        return diffYear <= 5 ? "yellow" : "grey";
+  
       case "gender":
-        return guessedValue === targetValue ? "green" : "grey"; // Gender is only green or grey
+        // Gender is only green or yellow
+        return guessed === target ? "yellow" : "grey";
+  
       default:
         return "grey"; // Default for other attributes
     }
@@ -108,23 +145,23 @@ function App() {
   return (
     <div className="app">
       <div className="logo-container">
-    <img src="public/image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
-    <button className="question-button" onClick={() => window.open("/help", "_blank")}>
-      <FaQuestionCircle />
-    </button>
-     </div>
-
+        <img src="./image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
+        <button className="question-button" onClick={() => window.open("/help", "_blank")}>
+          <FaQuestionCircle />
+        </button>
+      </div>
+  
       {/* Hidden audio player */}
       <audio controls style={{ display: "none" }}>
         <source src={`public/audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
-
+  
       {/* Števec poskusov */}
       <div className="attempts-counter">
         Še {attemptsLeft} poskusov
       </div>
-
+  
       {/* Search Input Container */}
       <div className="input-container">
         <input
@@ -135,7 +172,7 @@ function App() {
           onFocus={() => setShowDropdown(true)} // Show dropdown when input is focused
         />
         <FaSearch className="search-icon" />
-
+  
         {/* Dropdown Menu */}
         {showDropdown && filteredArtists.length > 0 && (
           <div className="dropdown">
@@ -151,7 +188,7 @@ function App() {
           </div>
         )}
       </div>
-
+  
       {/* Hint Buttons Container */}
       <div className="hint-buttons-container">
         <button onClick={playPreview} className="hint-button">
@@ -161,7 +198,7 @@ function App() {
           Prikaži sliko
         </button>
       </div>
-
+  
       {/* Show artist profile picture if Namig 2 is clicked */}
       {showProfilePic && (
         <div className="profile-pic-container">
@@ -173,60 +210,72 @@ function App() {
           <p className="hint-text">Namig slike</p>
         </div>
       )}
-
+  
       {/* Prikaz vseh ugibanih izvajalcev */}
       {guessedArtists.map((guessed, index) => (
-  <div key={index} className="guessed-artist">
-    <h2>{guessed.artist_name}</h2>
-    <img
-      src={guessed.artist_picture_url}
-      alt={guessed.artist_name}
-      className="artist-image"
-    />
-    <div className="attributes">
-      <div className={`attribute-box ${getAttributeColor("career_start_year", guessed.career_start_year, artist.career_start_year)}`}>
-        Začetno leto: {guessed.career_start_year}
-        {guessed.career_start_year > artist.career_start_year && (
-          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
-        )}
-        {guessed.career_start_year < artist.career_start_year && (
-          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
-        )}
-      </div>
-      <div className={`attribute-box ${getAttributeColor("monthly_listeners", guessed.monthly_listeners, artist.monthly_listeners)}`}>
-        Mesečni poslušalci: {guessed.monthly_listeners}
-        {guessed.monthly_listeners > artist.monthly_listeners && (
-          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
-        )}
-        {guessed.monthly_listeners < artist.monthly_listeners && (
-          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
-        )}
-      </div>
-      <div className={`attribute-box ${getAttributeColor("gender", guessed.gender, artist.gender)}`}>
-        Spol: {guessed.gender}
-      </div>
-      <div className={`attribute-box ${getAttributeColor("number_of_performers", guessed.number_of_performers, artist.number_of_performers)}`}>
-        Število članov: {guessed.number_of_performers}
-        {guessed.number_of_performers > artist.number_of_performers && (
-          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
-        )}
-        {guessed.number_of_performers < artist.number_of_performers && (
-          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
-        )}
-      </div>
-      <div className="attribute-box">
-        Žanri: {guessed.artist_genre}
-      </div>
-      <div className="attribute-box">
-        Mesto izvora: {guessed.city_of_origin}
-      </div>
-    </div>
-  </div>
-))}
-
+        <div key={index} className="guessed-artist">
+          <h2>{guessed.artist_name}</h2>
+          <img
+            src={guessed.artist_picture_url}
+            alt={guessed.artist_name}
+            className="artist-image"
+          />
+          <div className="attributes">
+            <div className={`attribute-box ${getAttributeColor("career_start_year", guessed.career_start_year, artist.career_start_year, guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase())}`}>
+              Začetno leto: {guessed.career_start_year}
+              {guessed.artist_name.toLowerCase() !== artist.artist_name.toLowerCase() && (
+                <>
+                  {guessed.career_start_year > artist.career_start_year && (
+                    <img src="./image/arrow-down.svg" alt="↑" className="arrow-icon" />
+                  )}
+                  {guessed.career_start_year < artist.career_start_year && (
+                    <img src="./image/arrow-up.svg" alt="↓" className="arrow-icon" />
+                  )}
+                </>
+              )}
+            </div>
+            <div className={`attribute-box ${getAttributeColor("monthly_listeners", guessed.monthly_listeners, artist.monthly_listeners, guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase())}`}>
+              Mesečni poslušalci: {guessed.monthly_listeners}
+              {guessed.artist_name.toLowerCase() !== artist.artist_name.toLowerCase() && (
+                <>
+                  {removeCommas(guessed.monthly_listeners) > removeCommas(artist.monthly_listeners) && (
+                    <img src="./image/arrow-down.svg" alt="↑" className="arrow-icon" />
+                  )}
+                  {removeCommas(guessed.monthly_listeners) < removeCommas(artist.monthly_listeners) && (
+                    <img src="./image/arrow-up.svg" alt="↓" className="arrow-icon" />
+                  )}
+                </>
+              )}
+            </div>
+            <div className={`attribute-box ${getAttributeColor("gender", guessed.gender, artist.gender, guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase())}`}>
+              Spol: {guessed.gender}
+            </div>
+            <div className={`attribute-box ${getAttributeColor("number_of_performers", guessed.number_of_performers, artist.number_of_performers, guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase())}`}>
+              Število članov: {guessed.number_of_performers}
+              {guessed.artist_name.toLowerCase() !== artist.artist_name.toLowerCase() && (
+                <>
+                  {guessed.number_of_performers > artist.number_of_performers && (
+                    <img src="./image/arrow-down.svg" alt="↑" className="arrow-icon" />
+                  )}
+                  {guessed.number_of_performers < artist.number_of_performers && (
+                    <img src="./image/arrow-up.svg" alt="↓" className="arrow-icon" />
+                  )}
+                </>
+              )}
+            </div>
+            <div className="attribute-box">
+              Žanri: {guessed.artist_genre}
+            </div>
+            <div className="attribute-box">
+              Mesto izvora: {guessed.city_of_origin}
+            </div>
+          </div>
+        </div>
+      ))}
+  
       <p className="besedilo1">Poišči današnjega izvajalca</p>
       <p className="besedilo1">Začneš tako, da vpišeš ime glasbenega izvajalca ali skupine</p>
-
+  
       <p>{message}</p>
     </div>
   );

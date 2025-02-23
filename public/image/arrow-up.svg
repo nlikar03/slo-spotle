@@ -9,7 +9,7 @@
    version="1.1"
    id="svg1"
    sodipodi:docname="arrow-open-end.svg"
-   inkscape:export-filename="arrow-down.svg"
+   inkscape:export-filename="arrow-up.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -28,7 +28,7 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1" />
   <path
-     d="M 1919.988,176.13001 1743.858,1.1474609e-5 959.869,783.86401 176.13,1.1474609e-5 0,176.13001 959.87,1136.248 Z"
+     d="M 0,960.11801 176.13,1136.248 960.119,352.38401 1743.858,1136.248 1919.988,960.11801 960.118,1.1474609e-5 Z"
      fill-rule="evenodd"
      id="path1" />
 </svg>
