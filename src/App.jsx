@@ -105,7 +105,6 @@ function App() {
     const target = attribute === "gender" ? targetValue : removeCommas(targetValue);
   
     if (guessed === target) {
-      // For gender, if it matches, return yellow (partial match)
       if (attribute === "gender") return "green";
       // For other attributes, return green (exact match)
       return "green";
