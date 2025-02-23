@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaSearch } from "react-icons/fa"; // Import search icon
+import { FaSearch, FaQuestionCircle } from "react-icons/fa";
 import artists from "./data/data.json";
 import "./styles.css";
 
@@ -10,6 +10,9 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredArtists, setFilteredArtists] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [guessedArtists, setGuessedArtists] = useState([]); // Track guessed artists
+  const [attemptsLeft, setAttemptsLeft] = useState(10); // Število preostalih poskusov
+  const [showProfilePic, setShowProfilePic] = useState(false); // State for showing profile picture
 
   useEffect(() => {
     setArtist(artists[Math.floor(Math.random() * artists.length)]);
@@ -17,10 +20,14 @@ function App() {
 
   useEffect(() => {
     if (searchQuery) {
-      // Filter artists based on the search query
+      // Filter artists based on the search query and exclude guessed artists
       const filtered = artists
-        .filter((a) =>
-          a.artist_name.toLowerCase().includes(searchQuery.toLowerCase())
+        .filter(
+          (a) =>
+            a.artist_name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+            !guessedArtists.some(
+              (guessed) => guessed.artist_name.toLowerCase() === a.artist_name.toLowerCase()
+            )
         )
         .slice(0, 10); // Limit to 10 results
       setFilteredArtists(filtered);
@@ -29,43 +36,106 @@ function App() {
       setFilteredArtists([]); // Clear results if query is empty
       setShowDropdown(false); // Hide dropdown
     }
-  }, [searchQuery]);
+  }, [searchQuery, guessedArtists]); // Re-run when searchQuery or guessedArtists changes
 
   const handleArtistSelect = (selectedArtist) => {
     setGuess(selectedArtist); // Set the selected artist as the guess
     setSearchQuery(selectedArtist); // Populate the search bar with the selected artist
     setShowDropdown(false); // Hide the dropdown
+    checkGuess(selectedArtist); // Automatically check the guess
   };
 
-  const checkGuess = () => {
-    if (guess.toLowerCase() === artist.artist_name.toLowerCase()) {
-      setMessage("✅ Correct!");
-    } else {
-      setMessage("❌ Try again!");
+  const checkGuess = (selectedArtist = guess) => {
+    if (attemptsLeft === 0) return; // Preveri, če je še kakšen poskus na voljo
+
+    // Check if the artist has already been guessed
+    if (
+      guessedArtists.some(
+        (guessed) => guessed.artist_name.toLowerCase() === selectedArtist.toLowerCase()
+      )
+    ) {
+      setMessage("❌ Artist already guessed!");
+      return;
     }
+
+    const guessed = artists.find(
+      (a) => a.artist_name.toLowerCase() === selectedArtist.toLowerCase()
+    );
+
+    if (guessed) {
+      setGuessedArtists((prev) => [guessed, ...prev]); // Dodaj ugibanega izvajalca na seznam
+      setAttemptsLeft((prev) => prev - 1); // Zmanjšaj število preostalih poskusov
+      setSearchQuery("");
+
+      if (guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase()) {
+        setMessage("✅ Correct!");
+      } else {
+        setMessage("❌ Try again!");
+      }
+    } else {
+      setMessage("❌ Artist not found!");
+    }
+  };
+
+  const playPreview = () => {
+    const audio = new Audio(`public/audio/${artist.spotify_link}.mp3`);
+    audio.play();
+  };
+
+  const getAttributeColor = (attribute, guessedValue, targetValue) => {
+    if (guessedValue === targetValue) return "green"; // Exact match
+  
+    switch (attribute) {
+      case "monthly_listeners":
+        return Math.abs(guessedValue - targetValue) <= 500 ? "yellow" : "grey";
+      case "number_of_performers":
+        return Math.abs(guessedValue - targetValue) <= 2 ? "yellow" : "grey";
+      case "career_start_year":
+        return Math.abs(guessedValue - targetValue) <= 5 ? "yellow" : "grey";
+      case "gender":
+        return guessedValue === targetValue ? "green" : "grey"; // Gender is only green or grey
+      default:
+        return "grey"; // Default for other attributes
+    }
+  };
+
+  const toggleProfilePic = () => {
+    setShowProfilePic((prev) => !prev);
   };
 
   if (!artist) return <h1>Loading...</h1>;
 
   return (
     <div className="app">
-      <img src="/image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
+      <div className="logo-container">
+    <img src="public/image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
+    <button className="question-button" onClick={() => window.open("/help", "_blank")}>
+      <FaQuestionCircle />
+    </button>
+     </div>
 
-      <audio controls>
-        <source src={`/audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+      {/* Hidden audio player */}
+      <audio controls style={{ display: "none" }}>
+        <source src={`public/audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
+
+      {/* Števec poskusov */}
+      <div className="attempts-counter">
+        Še {attemptsLeft} poskusov
+      </div>
 
       {/* Search Input Container */}
       <div className="input-container">
         <input
           type="text"
-          placeholder="Search for an artist..."
+          placeholder="Vpiši ime..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setShowDropdown(true)} // Show dropdown when input is focused
         />
         <FaSearch className="search-icon" />
+
         {/* Dropdown Menu */}
         {showDropdown && filteredArtists.length > 0 && (
           <div className="dropdown">
@@ -82,7 +152,81 @@ function App() {
         )}
       </div>
 
-      <button onClick={checkGuess}>Submit</button>
+      {/* Hint Buttons Container */}
+      <div className="hint-buttons-container">
+        <button onClick={playPreview} className="hint-button">
+          Predvajaj glasbo
+        </button>
+        <button onClick={toggleProfilePic} className="hint-button">
+          Prikaži sliko
+        </button>
+      </div>
+
+      {/* Show artist profile picture if Namig 2 is clicked */}
+      {showProfilePic && (
+        <div className="profile-pic-container">
+          <img
+            src={artist.artist_picture_url}
+            alt={artist.artist_name}
+            className="artist-image"
+          />
+          <p className="hint-text">Namig slike</p>
+        </div>
+      )}
+
+      {/* Prikaz vseh ugibanih izvajalcev */}
+      {guessedArtists.map((guessed, index) => (
+  <div key={index} className="guessed-artist">
+    <h2>{guessed.artist_name}</h2>
+    <img
+      src={guessed.artist_picture_url}
+      alt={guessed.artist_name}
+      className="artist-image"
+    />
+    <div className="attributes">
+      <div className={`attribute-box ${getAttributeColor("career_start_year", guessed.career_start_year, artist.career_start_year)}`}>
+        Začetno leto: {guessed.career_start_year}
+        {guessed.career_start_year > artist.career_start_year && (
+          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
+        )}
+        {guessed.career_start_year < artist.career_start_year && (
+          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
+        )}
+      </div>
+      <div className={`attribute-box ${getAttributeColor("monthly_listeners", guessed.monthly_listeners, artist.monthly_listeners)}`}>
+        Mesečni poslušalci: {guessed.monthly_listeners}
+        {guessed.monthly_listeners > artist.monthly_listeners && (
+          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
+        )}
+        {guessed.monthly_listeners < artist.monthly_listeners && (
+          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
+        )}
+      </div>
+      <div className={`attribute-box ${getAttributeColor("gender", guessed.gender, artist.gender)}`}>
+        Spol: {guessed.gender}
+      </div>
+      <div className={`attribute-box ${getAttributeColor("number_of_performers", guessed.number_of_performers, artist.number_of_performers)}`}>
+        Število članov: {guessed.number_of_performers}
+        {guessed.number_of_performers > artist.number_of_performers && (
+          <img src="public/image/arrow-up.svg" alt="↑" className="arrow-icon" />
+        )}
+        {guessed.number_of_performers < artist.number_of_performers && (
+          <img src="public/image/arrow-down.svg" alt="↓" className="arrow-icon" />
+        )}
+      </div>
+      <div className="attribute-box">
+        Žanri: {guessed.artist_genre}
+      </div>
+      <div className="attribute-box">
+        Mesto izvora: {guessed.city_of_origin}
+      </div>
+    </div>
+  </div>
+))}
+
+      <p className="besedilo1">Poišči današnjega izvajalca</p>
+      <p className="besedilo1">Začneš tako, da vpišeš ime glasbenega izvajalca ali skupine</p>
+
       <p>{message}</p>
     </div>
   );

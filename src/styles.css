@@ -6,7 +6,7 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Change to flex-start to allow scrolling */
   color: white;
   text-align: center;
 }
@@ -15,10 +15,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Moves content towards the top */
-  height: 100vh;
-  padding-top: 30px; /* Adjust as needed */
-  gap: 20px; /* Adds spacing between elements */
+  justify-content: flex-start;
+  width: 100%; /* Ensure the app takes full width */
+  padding-top: 30px;
+  gap: 20px;
+  padding-bottom: 50px; /* Add padding at the bottom for scrolling */
 }
 
 .logo {
@@ -92,16 +93,159 @@ button {
   font-size: 1rem;
   border: none;
   border-radius: 5px;
-  background-color: #4caf50;
+  background-color: #aa0cf3;
   color: white;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: #7208a2;
 }
 
 p {
   font-size: 1.2rem;
   margin: 0;
+}
+
+.besedilo1{
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #c0c0c0;
+}
+
+.guessed-artist {
+  margin-top: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333;
+  max-width: 400px; /* Add max-width to limit the width */
+  margin-left: auto;
+  margin-right: auto; /* Center the container */
+}
+
+
+.artist-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  margin: 10px 0;
+}
+
+.attributes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.attribute-box {
+  background-color: #e0e0e0; /* Siv ozadje */
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-width: 120px;
+  color: #333;
+}
+
+.attempts-counter {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #c0c0c0;
+}
+
+.hint-button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #aa0cf3;
+  color: white;
+  cursor: pointer;
+}
+.hint-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* Space between buttons */
+  margin-top: 10px; /* Space below the search bar */
+}
+
+.hint-button:hover {
+  background-color: #7208a2;
+}
+
+.profile-pic-container {
+  position: absolute;
+  top: 50%; /* Center vertically */
+  left: 0;
+  transform: translateY(-80%);
+  text-align: center;
+  max-width: 30%; /* Adjust this value to control the width */
+  width: 100%; /* Ensure it respects the max-width */
+  padding: 10px; /* Optional: Add padding for better spacing */
+}
+
+.profile-pic-container img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px solid #aa0cf3;
+}
+
+.hint-text {
+  font-size: 1rem;
+  color: #c0c0c0;
+}
+
+.logo-container {
+  position: relative; /* Make the container a positioning context */
+  display: flex;
+  justify-content: center; /* Center the logo horizontally */
+  align-items: center; /* Center the logo vertically */
+  width: 100%; /* Ensure the container takes full width */
+  margin-bottom: 20px; /* Add some space below the logo container */
+}
+
+.question-button {
+  position: absolute; /* Position the button absolutely within the container */
+  right: 0; /* Place the button on the right side of the container */
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.question-button:hover {
+  color: #aa0cf3;
+}
+
+.attribute-box.green {
+  background-color: #4CAF50; /* Green */
+}
+
+.attribute-box.yellow {
+  background-color: #FFEB3B; /* Yellow */
+}
+
+.attribute-box.grey {
+  background-color: #e0e0e0; /* Grey */
+}
+
+.attribute-box span {
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+.arrow-icon {
+  width: 1em; /* Same size as the text */
+  height: 1em; /* Same size as the text */
+  margin-left: 5px; /* Space between text and arrow */
+  vertical-align: middle; /* Align with the text */
 }
