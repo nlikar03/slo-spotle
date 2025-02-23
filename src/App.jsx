@@ -152,7 +152,7 @@ function App() {
   
       {/* Hidden audio player */}
       <audio controls style={{ display: "none" }}>
-        <source src={`public/audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
   
