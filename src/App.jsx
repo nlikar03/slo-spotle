@@ -78,7 +78,7 @@ function App() {
   };
 
   const playPreview = () => {
-    const audio = new Audio(`public/audio/${artist.spotify_link}.mp3`);
+    const audio = new Audio(`./audio/${artist.spotify_link}.mp3`);
     audio.play();
   };
 
