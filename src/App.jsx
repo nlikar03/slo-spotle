@@ -1,7 +1,51 @@
 import { useState, useEffect } from "react";
 import { FaSearch, FaQuestionCircle } from "react-icons/fa";
 import artists from "./data/data.json";
+import cityCoordinates from "./data/city_coordinates.json";
 import "./styles.css";
+
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRadians = (degrees) => degrees * (Math.PI / 180);
+  const R = 6371; // Radius of the Earth in km
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in km
+}
+
+
+const getCityColorClass = (distance) => {
+  if (distance >= 150) return "city-color-4"; // Red
+  if (distance >= 100) return "city-color-3"; // Orange
+  if (distance >= 50) return "city-color-2"; // Yellow
+  if (distance >= 25) return "city-color-1"; // Light green
+  if (distance >= 5) return "city-color-0"; // Green
+  return "city-color-default"; // Default (grey)
+};
+
+const getCityColor = (guessedCity, targetCity) => {
+  const guessedCoords = cityCoordinates[guessedCity];
+  const targetCoords = cityCoordinates[targetCity];
+
+  if (!guessedCoords || !targetCoords) return "city-color-default"; // Default color if coordinates are not found
+
+  const distance = haversineDistance(
+    guessedCoords.lat,
+    guessedCoords.lon,
+    targetCoords.lat,
+    targetCoords.lon
+  );
+
+  return getCityColorClass(distance);
+};
 
 function App() {
   const [artist, setArtist] = useState(null);
@@ -13,7 +57,19 @@ function App() {
   const [guessedArtists, setGuessedArtists] = useState([]); // Track guessed artists
   const [attemptsLeft, setAttemptsLeft] = useState(10); // Število preostalih poskusov
   const [showProfilePic, setShowProfilePic] = useState(false); // State for showing profile picture
+  const [hintImageUnlocked, setHintImageUnlocked] = useState(false); // Track if image hint is unlocked
+  const [hintMusicUnlocked, setHintMusicUnlocked] = useState(false); // Track if music hint is unlocked
+  const [showMusicPlayer, setShowMusicPlayer] = useState(false); // Track if music player is shown
 
+
+
+
+  const getGenreColor = (guessedGenre, targetGenres) => {
+    if (targetGenres.includes(guessedGenre)) {
+      return "green";
+    }
+    return "black"; // Default color for non-matching genres
+  };
   useEffect(() => {
     setArtist(artists[Math.floor(Math.random() * artists.length)]);
   }, []);
@@ -45,6 +101,8 @@ function App() {
     checkGuess(selectedArtist); // Automatically check the guess
   };
 
+  const [gameWon, setGameWon] = useState(false); // Track if the game is won
+
   const checkGuess = (selectedArtist = guess) => {
     if (attemptsLeft === 0) return; // Preveri, če je še kakšen poskus na voljo
 
@@ -58,6 +116,8 @@ function App() {
       return;
     }
 
+
+
     const guessed = artists.find(
       (a) => a.artist_name.toLowerCase() === selectedArtist.toLowerCase()
     );
@@ -68,18 +128,26 @@ function App() {
       setSearchQuery("");
 
       if (guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase()) {
-        setMessage("✅ Correct!");
-      } else {
-        setMessage("❌ Try again!");
+       setGameWon(true); // Set gameWon to true
+       } else {
       }
     } else {
-      setMessage("❌ Artist not found!");
     }
   };
 
+  useEffect(() => {
+    // Unlock image hint after 3 incorrect guesses
+    if (attemptsLeft <= 7) {
+      setHintImageUnlocked(true);
+    }
+    // Unlock music hint after 5 incorrect guesses
+    if (attemptsLeft <= 5) {
+      setHintMusicUnlocked(true);
+    }
+  }, [attemptsLeft]);
+
   const playPreview = () => {
-    const audio = new Audio(`./audio/${artist.spotify_link}.mp3`);
-    audio.play();
+    setShowMusicPlayer(true); // Show music player when hint is clicked
   };
 
   const removeCommas = (value) => {
@@ -150,11 +218,7 @@ function App() {
         </button>
       </div>
   
-      {/* Hidden audio player */}
-      <audio controls style={{ display: "none" }}>
-        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
+      
   
       {/* Števec poskusov */}
       <div className="attempts-counter">
@@ -190,25 +254,46 @@ function App() {
   
       {/* Hint Buttons Container */}
       <div className="hint-buttons-container">
-        <button onClick={playPreview} className="hint-button">
+        <button 
+          onClick={playPreview} 
+          className="hint-button" 
+          disabled={!hintMusicUnlocked}
+        >
           Predvajaj glasbo
         </button>
-        <button onClick={toggleProfilePic} className="hint-button">
+        <button 
+          onClick={toggleProfilePic} 
+          className="hint-button" 
+          disabled={!hintImageUnlocked}
+        >
           Prikaži sliko
         </button>
       </div>
+
+      {showMusicPlayer && (
+        <div className="profile-pic-container">
+          <p className="hint-text">Skladba: {artist.song_name}</p>
+          <audio controls autoPlay>
+            <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+          
+        </div>
+      )}
+
   
       {/* Show artist profile picture if Namig 2 is clicked */}
       {showProfilePic && (
-        <div className="profile-pic-container">
-          <img
-            src={artist.artist_picture_url}
-            alt={artist.artist_name}
-            className="artist-image"
-          />
-          <p className="hint-text">Namig slike</p>
-        </div>
-      )}
+          <div className="profile-pic-container">
+            <img
+              src={artist.artist_picture_url}
+              alt={artist.artist_name}
+              className="artist-image"
+            />
+            <p className="hint-text">Namig slike</p>
+          </div>
+        )}
+
   
       {/* Prikaz vseh ugibanih izvajalcev */}
       {guessedArtists.map((guessed, index) => (
@@ -263,11 +348,19 @@ function App() {
               )}
             </div>
             <div className="attribute-box">
-              Žanri: {guessed.artist_genre}
-            </div>
-            <div className="attribute-box">
-              Mesto izvora: {guessed.city_of_origin}
-            </div>
+                Žanri: {guessed.artist_genre.split(", ").map((genre, index) => (
+                  <span
+                    key={index}
+                    style={{ color: getGenreColor(genre, artist.artist_genre.split(", ")) }}
+                  >
+                    {genre}
+                    {index < guessed.artist_genre.split(", ").length - 1 ? ", " : ""}
+                  </span>
+                ))}
+              </div>
+              <div className={`attribute-box ${getCityColor(guessed.city_of_origin, artist.city_of_origin)}`}>
+                  Mesto izvora: {guessed.city_of_origin}
+              </div>
           </div>
         </div>
       ))}
@@ -276,6 +369,24 @@ function App() {
       <p className="besedilo1">Začneš tako, da vpišeš ime glasbenega izvajalca ali skupine</p>
   
       <p>{message}</p>
+      {gameWon && (
+  <>
+    <div className="overlay"></div>
+    <div className="victory-message">
+      <h1>Bravo, zmagali ste!</h1>
+      <h2>Pravilno ste uganili ✅, izvalajec je bil {artist.artist_name}</h2> {/* Add artist name */}
+      <img
+        src={artist.artist_picture_url}
+        alt={artist.artist_name}
+        className="artist-image"
+      />
+      <audio controls autoPlay>
+        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  </>
+)}
     </div>
   );
 }
