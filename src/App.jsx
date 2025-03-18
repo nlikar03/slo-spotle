@@ -217,7 +217,7 @@ function App() {
     <div className="app">
       <div className="logo-container">
         <img src="./image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
-        <button className="question-button" onClick={() => window.open("/slo-spotle/help/help.html", "_blank")}>
+        <button className="question-button" onClick={() => window.open("./help/help.html", "_blank")}>
           <FaQuestionCircle />
         </button>
       </div>
