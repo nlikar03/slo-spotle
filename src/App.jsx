@@ -23,11 +23,11 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 
 
 const getCityColorClass = (distance) => {
-  if (distance >= 150) return "city-color-4"; // Red
-  if (distance >= 100) return "city-color-3"; // Orange
-  if (distance >= 50) return "city-color-2"; // Yellow
-  if (distance >= 25) return "city-color-1"; // Light green
-  if (distance >= 5) return "city-color-0"; // Green
+  if (distance <= 5) return "city-color-0"; // Green
+  if (distance <= 25) return "city-color-1"; // Light green
+  if (distance <= 50) return "city-color-2"; // Yellow
+  if (distance <= 100) return "city-color-3"; // Orange
+  if (distance <= 150) return "city-color-4"; // Red
   return "city-color-default"; // Default (grey)
 };
 
@@ -60,6 +60,7 @@ function App() {
   const [hintImageUnlocked, setHintImageUnlocked] = useState(false); // Track if image hint is unlocked
   const [hintMusicUnlocked, setHintMusicUnlocked] = useState(false); // Track if music hint is unlocked
   const [showMusicPlayer, setShowMusicPlayer] = useState(false); // Track if music player is shown
+  const [gameLost, setGameLost] = useState(false); // Track if the game is lost
 
 
 
@@ -105,7 +106,7 @@ function App() {
 
   const checkGuess = (selectedArtist = guess) => {
     if (attemptsLeft === 0) return; // Preveri, če je še kakšen poskus na voljo
-
+  
     // Check if the artist has already been guessed
     if (
       guessedArtists.some(
@@ -115,23 +116,26 @@ function App() {
       setMessage("❌ Artist already guessed!");
       return;
     }
-
-
-
+  
     const guessed = artists.find(
       (a) => a.artist_name.toLowerCase() === selectedArtist.toLowerCase()
     );
-
+  
     if (guessed) {
       setGuessedArtists((prev) => [guessed, ...prev]); // Dodaj ugibanega izvajalca na seznam
       setAttemptsLeft((prev) => prev - 1); // Zmanjšaj število preostalih poskusov
       setSearchQuery("");
-
+  
       if (guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase()) {
-       setGameWon(true); // Set gameWon to true
-       } else {
+        setGameWon(true); // Set gameWon to true
+      } else if (attemptsLeft === 1) {
+        setGameLost(true); // Set gameLost to true if no attempts left
       }
     } else {
+      setAttemptsLeft((prev) => prev - 1); // Zmanjšaj število preostalih poskusov
+      if (attemptsLeft === 1) {
+        setGameLost(true); // Set gameLost to true if no attempts left
+      }
     }
   };
 
@@ -213,7 +217,7 @@ function App() {
     <div className="app">
       <div className="logo-container">
         <img src="./image/drawing.png" alt="Slovenian Spotle Logo" className="logo" />
-        <button className="question-button" onClick={() => window.open("/help", "_blank")}>
+        <button className="question-button" onClick={() => window.open("/slo-spotle/help/help.html", "_blank")}>
           <FaQuestionCircle />
         </button>
       </div>
@@ -297,7 +301,7 @@ function App() {
   
       {/* Prikaz vseh ugibanih izvajalcev */}
       {guessedArtists.map((guessed, index) => (
-        <div key={index} className="guessed-artist">
+        <div key={`${guessed.artist_name}-${index}`} className="guessed-artist">
           <h2>{guessed.artist_name}</h2>
           <img
             src={guessed.artist_picture_url}
@@ -375,6 +379,24 @@ function App() {
     <div className="victory-message">
       <h1>Bravo, zmagali ste!</h1>
       <h2>Pravilno ste uganili ✅, izvalajec je bil {artist.artist_name}</h2> {/* Add artist name */}
+      <img
+        src={artist.artist_picture_url}
+        alt={artist.artist_name}
+        className="artist-image"
+      />
+      <audio controls autoPlay>
+        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  </>
+)}
+{gameLost && (
+  <>
+    <div className="overlay"></div>
+    <div className="victory-message">
+      <h1>❌ Žal ste izgubili! </h1>
+      <h2>Pravilni izvajalec je bil {artist.artist_name}</h2> {/* Add artist name */}
       <img
         src={artist.artist_picture_url}
         alt={artist.artist_name}
