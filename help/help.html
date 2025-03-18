@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomoč - Slovenian Spotle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #aa0cf3;
+      text-align: center;
+    }
+    h2 {
+      color: #7208a2;
+    }
+    p {
+      line-height: 1.6;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #777;
+    }
+    .color-squares {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .color-square {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+    }
+    .city-color-0 {
+      background-color: #4caf50; /* Green (0 km) */
+    }
+    .city-color-1 {
+      background-color: #99af4c; /* Light green */
+    }
+    .city-color-2 {
+      background-color: #FFFF00; /* Yellow */
+    }
+    .city-color-3 {
+      background-color: #FF8000; /* Orange */
+    }
+    .city-color-4 {
+      background-color: #FF0000; /* Red (150 km) */
+    }
+    .city-color-default {
+      background-color: grey; /* Default color if coordinates are not found */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pomoč za Slovenian Spotle</h1>
+    <p>Dobrodošli na Slovenian Spotle, slovenski različici popularne igre, kjer ugibate glasbene izvajalce! Spodaj so razloženi osnovni koncepti igre.</p>
+
+    <h2>Kako igrati?</h2>
+    <ul>
+      <li><strong>1. Cilj igre:</strong> Vaša naloga je uganiti današnjega glasbenega izvajalca ali skupino.</li>
+      <li><strong>2. Vnos izvajalca:</strong> V iskalno polje vpišite ime izvajalca ali skupine. Ko se pojavijo predlogi, izberite enega.</li>
+      <li><strong>3. Število poskusov:</strong> Na voljo imate 10 poskusov, da uganete pravega izvajalca.</li>
+      <li><strong>4. Namigi:</strong> Po nekaj napačnih poskusih se vam odklenejo namigi, kot so slika izvajalca ali predogled njihove skladbe.</li>
+    </ul>
+
+    <h2>Kaj pomenijo barve in ikone?</h2>
+    <img src="primer.png" alt="Primer Image" />
+    <ul>
+      <li><strong>Zelena barva:</strong> Točno ujemanje (npr. pravilno leto začetka kariere ali pravilen spol).</li>
+      <li><strong>Rumena barva:</strong> Delno ujemanje (npr. leto začetka kariere je blizu pravilnega).</li>
+      <li><strong>Siva barva:</strong> Nobeno ujemanje.</li>
+      <li><strong>Puščice:</strong> Puščice navzgor ali navzdol kažejo, ali je vaš vnos večji ali manjši od pravilnega (npr. število mesečnih poslušalcev).</li>
+      <li><strong>Mesta:</strong> Barve kažejo, kako blizu je mesto izvajalca vašemu vnosu. Zelena pomeni, da sta mesti enaki ali pa zelo blizu, rumena pa, da sta relativno blizu (pod 30km). Rdeča pomeni, da sta mesti oddaljeni več kot 150 km.</li>
+    </ul>
+
+    <div class="color-squares">
+      <div class="color-square city-color-0" title="0 km (Točno ujemanje)"></div>
+      <div class="color-square city-color-1" title="Do 50 km"></div>
+      <div class="color-square city-color-2" title="Do 100 km"></div>
+      <div class="color-square city-color-3" title="Do 150 km"></div>
+      <div class="color-square city-color-4" title="Več kot 150 km"></div>
+      <div class="color-square city-color-default" title="Neznano mesto"></div>
+    </div>
+
+    <h2>Namigi</h2>
+    <ul>
+      <li><strong>Namig 1 (Glasba):</strong> Po 5 napačnih poskusih lahko poslušate predogled skladbe izvajalca.</li>
+      <li><strong>Namig 2 (Slika):</strong> Po 3 napačnih poskusih lahko vidite sliko izvajalca.</li>
+    </ul>
+
+    <h2>Konec igre</h2>
+    <ul>
+      <li><strong>Zmaga:</strong> Če pravilno uganete izvajalca, se prikaže sporočilo o zmagi.</li>
+      <li><strong>Poraz:</strong> Če zmanjka poskusov, se prikaže sporočilo o porazu in pravilni izvajalec.</li>
+    </ul>
+
+    <div class="footer">
+      <p>Hvala, ker igrate Slovenian Spotle! Za vprašanja ali povratne informacije nas kontaktirajte.</p>
+    </div>
+  </div>
+</body>
+</html>
