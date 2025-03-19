@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { FaSearch, FaQuestionCircle } from "react-icons/fa";
 import artists from "./data/data.json";
 import cityCoordinates from "./data/city_coordinates.json";
+import dailyArtists from "./data/artist.json";
 import "./styles.css";
+
+
+
+
 
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -47,6 +52,47 @@ const getCityColor = (guessedCity, targetCity) => {
   return getCityColorClass(distance);
 };
 
+
+// Get the artist for today based on the date
+function getDailyArtist() {
+  const today = new Date();
+  const dayOfMonth = today.getDate(); // Gets day of month (1-31)
+  
+  // Get artist name for today (arrays are 0-indexed, so subtract 1)
+  // If the day is beyond our list length, cycle back
+  const artistIndex = (dayOfMonth - 1) % dailyArtists.length;
+  const artistName = dailyArtists[artistIndex];
+  
+  // Find artist by name in the artists array
+  const todaysArtist = artists.find(a => a.artist_name === artistName);
+  
+  // If artist isn't found, return first artist as fallback
+  return todaysArtist || artists[0];
+}
+
+// Calculate time until next reset (midnight CET)
+function getTimeUntilReset() {
+  const now = new Date();
+  const midnight = new Date();
+  
+  // Set to next midnight in CET
+  midnight.setHours(24, 0, 0, 0);
+  midnight.setTime(midnight.getTime() + (midnight.getTimezoneOffset() + 60) * 60000); // Adjust to CET
+  
+  return midnight - now;
+}
+
+// Format milliseconds to HH:MM:SS
+function formatTimeRemaining(milliseconds) {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+
 function App() {
   const [artist, setArtist] = useState(null);
   const [guess, setGuess] = useState("");
@@ -61,6 +107,9 @@ function App() {
   const [hintMusicUnlocked, setHintMusicUnlocked] = useState(false); // Track if music hint is unlocked
   const [showMusicPlayer, setShowMusicPlayer] = useState(false); // Track if music player is shown
   const [gameLost, setGameLost] = useState(false); // Track if the game is lost
+  const [gameWon, setGameWon] = useState(false); // Track if the game is won
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const [timeUntilReset, setTimeUntilReset] = useState("");
 
 
 
@@ -72,8 +121,49 @@ function App() {
     return "black"; // Default color for non-matching genres
   };
   useEffect(() => {
-    setArtist(artists[Math.floor(Math.random() * artists.length)]);
+    const checkIfPlayed = () => {
+      const lastPlayed = localStorage.getItem('spotleLastPlayed');
+      const today = new Date().toDateString();
+      
+      if (lastPlayed === today) {
+        setAlreadyPlayed(true);
+        const gameResult = localStorage.getItem('spotleGameResult');
+        if (gameResult === 'won') {
+          setGameWon(true);
+          // Get the saved artist data
+          const savedArtist = JSON.parse(localStorage.getItem('spotleArtist'));
+          if (savedArtist) {
+            setArtist(savedArtist);
+          }
+        } else if (gameResult === 'lost') {
+          setGameLost(true);
+          // Get the saved artist data
+          const savedArtist = JSON.parse(localStorage.getItem('spotleArtist'));
+          if (savedArtist) {
+            setArtist(savedArtist);
+          }
+        }
+      } else {
+        // New day, set up new game
+        const dailyArtist = getDailyArtist();
+        setArtist(dailyArtist);
+      }
+    };
+    
+    checkIfPlayed();
   }, []);
+
+   // Timer for countdown to next reset
+   useEffect(() => {
+    if (gameWon || gameLost) {
+      const timer = setInterval(() => {
+        const timeLeft = getTimeUntilReset();
+        setTimeUntilReset(formatTimeRemaining(timeLeft));
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [gameWon, gameLost]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -102,7 +192,7 @@ function App() {
     checkGuess(selectedArtist); // Automatically check the guess
   };
 
-  const [gameWon, setGameWon] = useState(false); // Track if the game is won
+  
 
   const checkGuess = (selectedArtist = guess) => {
     if (attemptsLeft === 0) return; // Preveri, če je še kakšen poskus na voljo
@@ -122,19 +212,31 @@ function App() {
     );
   
     if (guessed) {
-      setGuessedArtists((prev) => [guessed, ...prev]); // Dodaj ugibanega izvajalca na seznam
-      setAttemptsLeft((prev) => prev - 1); // Zmanjšaj število preostalih poskusov
+      setGuessedArtists((prev) => [guessed, ...prev]);
+      setAttemptsLeft((prev) => prev - 1);
       setSearchQuery("");
   
       if (guessed.artist_name.toLowerCase() === artist.artist_name.toLowerCase()) {
-        setGameWon(true); // Set gameWon to true
+        setGameWon(true);
+        // Save game result to localStorage
+        localStorage.setItem('spotleGameResult', 'won');
+        localStorage.setItem('spotleLastPlayed', new Date().toDateString());
+        localStorage.setItem('spotleArtist', JSON.stringify(artist));
       } else if (attemptsLeft === 1) {
-        setGameLost(true); // Set gameLost to true if no attempts left
+        setGameLost(true);
+        // Save game result to localStorage
+        localStorage.setItem('spotleGameResult', 'lost');
+        localStorage.setItem('spotleLastPlayed', new Date().toDateString());
+        localStorage.setItem('spotleArtist', JSON.stringify(artist));
       }
     } else {
-      setAttemptsLeft((prev) => prev - 1); // Zmanjšaj število preostalih poskusov
+      setAttemptsLeft((prev) => prev - 1);
       if (attemptsLeft === 1) {
-        setGameLost(true); // Set gameLost to true if no attempts left
+        setGameLost(true);
+        // Save game result to localStorage
+        localStorage.setItem('spotleGameResult', 'lost');
+        localStorage.setItem('spotleLastPlayed', new Date().toDateString());
+        localStorage.setItem('spotleArtist', JSON.stringify(artist));
       }
     }
   };
@@ -374,41 +476,66 @@ function App() {
   
       <p>{message}</p>
       {gameWon && (
-  <>
-    <div className="overlay"></div>
-    <div className="victory-message">
-      <h1>Bravo, zmagali ste!</h1>
-      <h2>Pravilno ste uganili ✅, izvalajec je bil {artist.artist_name}</h2> {/* Add artist name */}
-      <img
-        src={artist.artist_picture_url}
-        alt={artist.artist_name}
-        className="artist-image"
-      />
-      <audio controls autoPlay>
-        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-  </>
-)}
-{gameLost && (
-  <>
-    <div className="overlay"></div>
-    <div className="victory-message">
-      <h1>❌ Žal ste izgubili! </h1>
-      <h2>Pravilni izvajalec je bil {artist.artist_name}</h2> {/* Add artist name */}
-      <img
-        src={artist.artist_picture_url}
-        alt={artist.artist_name}
-        className="artist-image"
-      />
-      <audio controls autoPlay>
-        <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-  </>
-)}
+        <>
+          <div className="overlay"></div>
+          <div className="victory-message">
+            <h1>Bravo, zmagali ste!</h1>
+            <h2>Pravilno ste uganili ✅, izvalajec je bil {artist.artist_name}</h2>
+            <img
+              src={artist.artist_picture_url}
+              alt={artist.artist_name}
+              className="artist-image"
+            />
+            <audio controls autoPlay>
+              <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+            <div className="timer-container">
+              <h3>Nova uganka bo na voljo čez:</h3>
+              <div className="timer">{timeUntilReset}</div>
+            </div>
+          </div>
+        </>
+      )}
+      
+      {/* Updated loss message with timer */}
+      {gameLost && (
+        <>
+          <div className="overlay"></div>
+          <div className="victory-message">
+            <h1>❌ Žal ste izgubili! </h1>
+            <h2>Pravilni izvajalec je bil {artist.artist_name}</h2>
+            <img
+              src={artist.artist_picture_url}
+              alt={artist.artist_name}
+              className="artist-image"
+            />
+            <audio controls autoPlay>
+              <source src={`./audio/${artist.spotify_link}.mp3`} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+            <div className="timer-container">
+              <h3>Nova uganka bo na voljo čez:</h3>
+              <div className="timer">{timeUntilReset}</div>
+            </div>
+          </div>
+        </>
+      )}
+      
+      {/* Already played today message */}
+      {alreadyPlayed && !gameWon && !gameLost && (
+        <>
+          <div className="overlay"></div>
+          <div className="already-played-message">
+            <h1>Danes ste že igrali!</h1>
+            <p>Vrnite se jutri za novo uganko</p>
+            <div className="timer-container">
+              <h3>Nova uganka bo na voljo čez:</h3>
+              <div className="timer">{timeUntilReset}</div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
